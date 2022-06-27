@@ -17,6 +17,7 @@ const (
 	ThresholdChangedSig EventSig = "RelayerThresholdChanged(uint256)"
 	ProposalEventSig    EventSig = "ProposalEvent(uint8,uint64,uint8,bytes32)"
 	ProposalVoteSig     EventSig = "ProposalVote(uint8,uint64,uint8,bytes32)"
+	RegisterTokenSig    EventSig = "RegisterToken(uint8,uint8,uint64,bytes32,address,address,address,address,address,address)"
 )
 
 // Deposit struct holds event data with all necessary parameters and a handler response
@@ -36,4 +37,21 @@ type Deposit struct {
 	// ERC721Handler: responds with deposited token metadata acquired by calling a tokenURI method in the token contract
 	// GenericHandler: responds with the raw bytes returned from the call to the target contract
 	HandlerResponse []byte
+}
+
+type RegisterToken struct {
+	Source uint8
+
+	Destination uint8
+
+	DepositNonce uint64
+
+	ResourceId types.ResourceID
+
+	Sourcehandler      common.Address
+	Desthandler        common.Address
+	DestBridgeAddress  common.Address
+	SourceBrigeAddress common.Address
+	SourceTokenAddress common.Address
+	DestTokenAddress   common.Address
 }

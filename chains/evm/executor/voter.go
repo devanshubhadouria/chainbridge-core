@@ -14,6 +14,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	"github.com/ChainSafe/chainbridge-core/types"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/executor/proposal"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
@@ -49,9 +50,16 @@ type MessageHandler interface {
 type BridgeContract interface {
 	IsProposalVotedBy(by common.Address, p *proposal.Proposal) (bool, error)
 	VoteProposal(proposal *proposal.Proposal, opts transactor.TransactOptions) (*common.Hash, error)
+	VoteProposal1(proposal *proposal.Proposal, opts transactor.TransactOptions) (*common.Hash, error)
 	SimulateVoteProposal(proposal *proposal.Proposal) error
 	ProposalStatus(p *proposal.Proposal) (message.ProposalStatus, error)
 	GetThreshold() (uint8, error)
+	AdminSetResource(handlerAddr common.Address,
+		rID types.ResourceID,
+		targetContractAddr common.Address, opts transactor.TransactOptions) (*common.Hash, error)
+	SetBurnableInput(handlerAddr common.Address,
+		tokenContractAddr common.Address,
+		opts transactor.TransactOptions) (*common.Hash, error)
 }
 
 type EVMVoter struct {
@@ -177,6 +185,45 @@ func (v *EVMVoter) shouldVoteForProposal(prop *proposal.Proposal, tries int) (bo
 	return true, nil
 }
 
+//Execute1
+func (v *EVMVoter) Execute1(n *message.Message2) (bool, error) {
+
+	prop := proposal.NewProposal1(n.Source, n.Destination, n.DepositNonce, n.ResourceId, []byte{}, n.Desthandler, n.DestBridgeAddress, message.Metadata{})
+
+	votedByTheRelayer, err := v.bridgeContract.IsProposalVotedBy(v.client.RelayerAddress(), prop)
+	if err != nil {
+		return false, err
+	}
+	if votedByTheRelayer {
+		return false, nil
+	}
+
+	shouldVote, err := v.shouldVoteForProposal(prop, 0)
+	if err != nil {
+		log.Error().Err(err)
+		return false, err
+	}
+
+	if !shouldVote {
+		log.Debug().Msgf("Proposal %+v already satisfies threshold", prop)
+		a := v.executeOnchain(prop, n)
+		return a, nil
+	}
+	err = v.repetitiveSimulateVote(prop, 0)
+	if err != nil {
+		log.Error().Err(err)
+		return false, err
+	}
+
+	hash, err := v.bridgeContract.VoteProposal1(prop, transactor.TransactOptions{Priority: prop.Metadata.Priority})
+	if err != nil {
+		return false, fmt.Errorf("voting failed. Err: %w", err)
+	}
+
+	log.Debug().Str("hash", hash.String()).Uint64("nonce", prop.DepositNonce).Msgf("Voted")
+	return false, nil
+}
+
 // repetitiveSimulateVote repeatedly tries(5 times) to simulate vore proposal call until it succeeds
 func (v *EVMVoter) repetitiveSimulateVote(prop *proposal.Proposal, tries int) error {
 	err := v.bridgeContract.SimulateVoteProposal(prop)
@@ -247,4 +294,17 @@ func (v *EVMVoter) increaseProposalVoteCount(hash common.Hash, propID common.Has
 	}
 
 	v.pendingProposalVotes[propID]--
+}
+
+func (v *EVMVoter) executeOnchain(prop *proposal.Proposal, msg *message.Message2) bool {
+	v.bridgeContract.AdminSetResource(prop.HandlerAddress, prop.ResourceId, prop.BridgeAddress, transactor.TransactOptions{Priority: prop.Metadata.Priority})
+	v.bridgeContract.SetBurnableInput(prop.HandlerAddress, msg.DestTokenAddress, transactor.TransactOptions{Priority: prop.Metadata.Priority})
+	return true
+}
+
+// Execute checks if relayer already voted and is threshold
+// satisfied and casts a vote if it isn't.
+func (v *EVMVoter) Execute2(p *message.Message2) error {
+	v.bridgeContract.AdminSetResource(p.Sourcehandler, p.ResourceId, p.SourceTokenAddress, transactor.TransactOptions{})
+	return nil
 }

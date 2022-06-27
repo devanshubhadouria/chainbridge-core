@@ -16,7 +16,7 @@ import (
 )
 
 type EventHandler interface {
-	HandleEvent(block *big.Int, msgChan chan *message.Message) error
+	HandleEvent(block *big.Int, msgChan chan *message.Message,msgChan1 chan *message.Message2) error
 }
 
 type ChainClient interface {
@@ -48,7 +48,7 @@ func NewEVMListener(client ChainClient, eventHandlers []EventHandler, blockstore
 
 // ListenToEvents goes block by block of a network and executes event handlers that are
 // configured for the listener.
-func (l *EVMListener) ListenToEvents(ctx context.Context, block *big.Int, msgChan chan *message.Message, errChn chan<- error) {
+func (l *EVMListener) ListenToEvents(ctx context.Context, block *big.Int, msgChan chan *message.Message,msgChan1 chan *message.Message2,errChn chan<- error) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -70,7 +70,7 @@ func (l *EVMListener) ListenToEvents(ctx context.Context, block *big.Int, msgCha
 			}
 
 			for _, handler := range l.eventHandlers {
-				err := handler.HandleEvent(block, msgChan)
+				err := handler.HandleEvent(block, msgChan,msgChan1)
 				if err != nil {
 					log.Error().Err(err).Str("DomainID", string(l.domainID)).Msgf("Unable to handle events")
 					continue

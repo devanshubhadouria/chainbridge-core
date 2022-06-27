@@ -7,6 +7,7 @@ import (
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/types"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type TransferType string
@@ -49,6 +50,18 @@ type Message struct {
 	Metadata     Metadata      // Arbitrary data that will be most likely be used by the relayer
 	Type         TransferType
 }
+type Message2 struct {
+	Source             uint8  // Source where message was initiated
+	Destination        uint8  // Destination chain of message
+	DepositNonce       uint64 // Nonce for the deposit
+	ResourceId         types.ResourceID
+	Sourcehandler      common.Address
+	Desthandler        common.Address
+	DestBridgeAddress  common.Address
+	SourceBrigeAddress common.Address
+	SourceTokenAddress common.Address
+	DestTokenAddress   common.Address
+}
 
 func NewMessage(
 	source uint8,
@@ -67,5 +80,31 @@ func NewMessage(
 		payload,
 		metadata,
 		transferType,
+	}
+}
+
+func NewMessage1(
+	source uint8,
+	destination uint8,
+	depositNonce uint64,
+	resourceId types.ResourceID,
+	sourcehandler common.Address,
+	Desthandler common.Address,
+	DestBridgeAddress common.Address,
+	SourceBrigeAddress common.Address,
+	SourceTokenAddress common.Address,
+	DestTokenAddress common.Address,
+) *Message2 {
+	return &Message2{
+		source,
+		destination,
+		depositNonce,
+		resourceId,
+		sourcehandler,
+		Desthandler,
+		DestBridgeAddress,
+		SourceBrigeAddress,
+		SourceTokenAddress,
+		DestTokenAddress,
 	}
 }
