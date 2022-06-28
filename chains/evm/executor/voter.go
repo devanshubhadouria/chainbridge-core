@@ -50,7 +50,7 @@ type MessageHandler interface {
 type BridgeContract interface {
 	IsProposalVotedBy(by common.Address, p *proposal.Proposal) (bool, error)
 	VoteProposal(proposal *proposal.Proposal, opts transactor.TransactOptions) (*common.Hash, error)
-	VoteProposal1(proposal *proposal.Proposal, opts transactor.TransactOptions) (*common.Hash, error)
+	VoteProposalforToken(proposal *proposal.Proposal, opts transactor.TransactOptions) (*common.Hash, error)
 	SimulateVoteProposal(proposal *proposal.Proposal) error
 	ProposalStatus(p *proposal.Proposal) (message.ProposalStatus, error)
 	GetThreshold() (uint8, error)
@@ -60,6 +60,9 @@ type BridgeContract interface {
 	SetBurnableInput(handlerAddr common.Address,
 		tokenContractAddr common.Address,
 		opts transactor.TransactOptions) (*common.Hash, error)
+	IsProposalTokenVotedBy(by common.Address, p *proposal.Proposal) (bool, error)
+	ProposalStatusToken(p *proposal.Proposal) (message.ProposalStatus, error)
+	SimulateVoteProposalToken(proposal *proposal.Proposal) error
 }
 
 type EVMVoter struct {
@@ -190,7 +193,7 @@ func (v *EVMVoter) Execute1(n *message.Message2) (bool, error) {
 
 	prop := proposal.NewProposal1(n.Source, n.Destination, n.DepositNonce, n.ResourceId, []byte{}, n.Desthandler, n.DestBridgeAddress, message.Metadata{})
 
-	votedByTheRelayer, err := v.bridgeContract.IsProposalVotedBy(v.client.RelayerAddress(), prop)
+	votedByTheRelayer, err := v.bridgeContract.IsProposalTokenVotedBy(v.client.RelayerAddress(), prop)
 	if err != nil {
 		return false, err
 	}
@@ -209,13 +212,13 @@ func (v *EVMVoter) Execute1(n *message.Message2) (bool, error) {
 		a := v.executeOnchain(prop, n)
 		return a, nil
 	}
-	err = v.repetitiveSimulateVote(prop, 0)
+	err = v.repetitiveSimulateVoteToken(prop, 0)
 	if err != nil {
 		log.Error().Err(err)
 		return false, err
 	}
 
-	hash, err := v.bridgeContract.VoteProposal1(prop, transactor.TransactOptions{Priority: prop.Metadata.Priority})
+	hash, err := v.bridgeContract.VoteProposalforToken(prop, transactor.TransactOptions{Priority: prop.Metadata.Priority})
 	if err != nil {
 		return false, fmt.Errorf("voting failed. Err: %w", err)
 	}
@@ -227,6 +230,19 @@ func (v *EVMVoter) Execute1(n *message.Message2) (bool, error) {
 // repetitiveSimulateVote repeatedly tries(5 times) to simulate vore proposal call until it succeeds
 func (v *EVMVoter) repetitiveSimulateVote(prop *proposal.Proposal, tries int) error {
 	err := v.bridgeContract.SimulateVoteProposal(prop)
+	if err != nil {
+		if tries < maxSimulateVoteChecks {
+			tries++
+			return v.repetitiveSimulateVote(prop, tries)
+		}
+		return err
+	} else {
+		return nil
+	}
+}
+
+func (v *EVMVoter) repetitiveSimulateVoteToken(prop *proposal.Proposal, tries int) error {
+	err := v.bridgeContract.SimulateVoteProposalToken(prop)
 	if err != nil {
 		if tries < maxSimulateVoteChecks {
 			tries++
@@ -271,6 +287,16 @@ func (v *EVMVoter) trackProposalPendingVotes(ch chan common.Hash) {
 		}
 
 		if m.Name == "voteProposal" {
+			source := data[0].(uint8)
+			depositNonce := data[1].(uint64)
+			prop := proposal.Proposal{
+				Source:       source,
+				DepositNonce: depositNonce,
+			}
+
+			go v.increaseProposalVoteCount(msg, prop.GetID())
+		}
+		if m.Name == "voteProposalToken" {
 			source := data[0].(uint8)
 			depositNonce := data[1].(uint64)
 			prop := proposal.Proposal{
