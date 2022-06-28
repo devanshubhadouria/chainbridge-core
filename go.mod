@@ -1,4 +1,4 @@
-module github.com/ChainSafe/chainbridge-core
+module github.com/devanshubhadouria/chainbridge-core
 
 go 1.17
 
