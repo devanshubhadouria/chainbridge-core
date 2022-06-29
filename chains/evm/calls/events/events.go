@@ -1,7 +1,7 @@
 package events
 
 import (
-	"github.com/ChainSafe/chainbridge-core/types"
+	"github.com/devanshubhadouria/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -21,7 +21,7 @@ const (
 )
 
 // Deposit struct holds event data with all necessary parameters and a handler response
-// https://github.com/ChainSafe/chainbridge-solidity/blob/develop/contracts/Bridge.sol#L47
+// https://github.com/devanshubhadouria/chainbridge-solidity/blob/develop/contracts/Bridge.sol#L47
 type Deposit struct {
 	// ID of chain deposit will be bridged to
 	DestinationDomainID uint8
