@@ -1,4 +1,4 @@
-// Copyright 2021 ChainSafe Systems
+// Copyright 2021 devanshubhadouria Systems
 // SPDX-License-Identifier: LGPL-3.0-only
 
 package app
@@ -12,22 +12,22 @@ import (
 
 	secp256k1 "github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/ChainSafe/chainbridge-core/chains/evm"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/events"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/signAndSend"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/executor"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
-	"github.com/ChainSafe/chainbridge-core/config"
-	"github.com/ChainSafe/chainbridge-core/config/chain"
-	"github.com/ChainSafe/chainbridge-core/e2e/dummy"
-	"github.com/ChainSafe/chainbridge-core/flags"
-	"github.com/ChainSafe/chainbridge-core/lvldb"
-	"github.com/ChainSafe/chainbridge-core/opentelemetry"
-	"github.com/ChainSafe/chainbridge-core/relayer"
-	"github.com/ChainSafe/chainbridge-core/store"
+	"github.com/devanshubhadouria/chainbridge-core/chains/evm"
+	"github.com/devanshubhadouria/chainbridge-core/chains/evm/calls/contracts/bridge"
+	"github.com/devanshubhadouria/chainbridge-core/chains/evm/calls/events"
+	"github.com/devanshubhadouria/chainbridge-core/chains/evm/calls/evmclient"
+	"github.com/devanshubhadouria/chainbridge-core/chains/evm/calls/evmtransaction"
+	"github.com/devanshubhadouria/chainbridge-core/chains/evm/calls/transactor/signAndSend"
+	"github.com/devanshubhadouria/chainbridge-core/chains/evm/executor"
+	"github.com/devanshubhadouria/chainbridge-core/chains/evm/listener"
+	"github.com/devanshubhadouria/chainbridge-core/config"
+	"github.com/devanshubhadouria/chainbridge-core/config/chain"
+	"github.com/devanshubhadouria/chainbridge-core/e2e/dummy"
+	"github.com/devanshubhadouria/chainbridge-core/flags"
+	"github.com/devanshubhadouria/chainbridge-core/lvldb"
+	"github.com/devanshubhadouria/chainbridge-core/opentelemetry"
+	"github.com/devanshubhadouria/chainbridge-core/relayer"
+	"github.com/devanshubhadouria/chainbridge-core/store"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"

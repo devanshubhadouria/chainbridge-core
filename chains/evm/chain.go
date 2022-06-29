@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ChainSafe/chainbridge-core/config/chain"
-	"github.com/ChainSafe/chainbridge-core/relayer/message"
-	"github.com/ChainSafe/chainbridge-core/store"
+	"github.com/devanshubhadouria/chainbridge-core/config/chain"
+	"github.com/devanshubhadouria/chainbridge-core/relayer/message"
+	"github.com/devanshubhadouria/chainbridge-core/store"
 	"github.com/rs/zerolog/log"
 )
 
@@ -21,6 +21,7 @@ type EventListener interface {
 type ProposalExecutor interface {
 	Execute(message *message.Message) error
 	Execute1(message *message.Message2) (bool, error)
+	Execute2(message *message.Message2) error
 }
 
 // EVMChain is struct that aggregates all data required for
@@ -61,6 +62,9 @@ func (c *EVMChain) Write(msg *message.Message) error {
 func (c *EVMChain) Write1(msg1 *message.Message2) (bool, error) {
 	a, err := c.writer.Execute1(msg1)
 	return a, err
+}
+func (c *EVMChain) Write2(msg *message.Message2) error {
+	return c.writer.Execute2(msg)
 }
 
 func (c *EVMChain) DomainID() uint8 {
