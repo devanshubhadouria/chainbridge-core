@@ -89,7 +89,7 @@ func (l *Listener) UnpackDeposit(abi abi.ABI, data []byte) (*Deposit, error) {
 func (l *Listener) UnpackRegisterToken(abi abi.ABI, data []byte) (*RegisterToken, error) {
 	var dl RegisterToken
 
-	err := abi.UnpackIntoInterface(&dl, "Deposit", data)
+	err := abi.UnpackIntoInterface(&dl, "RegisterToken", data)
 	if err != nil {
 		return &RegisterToken{}, err
 	}
