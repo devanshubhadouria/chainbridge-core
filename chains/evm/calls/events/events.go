@@ -40,9 +40,9 @@ type Deposit struct {
 }
 
 type RegisterToken struct {
-	Source uint8
+	DomainId uint8
 
-	Destination uint8
+	DestinationDomainId uint8
 
 	DepositNonce uint64
 
@@ -52,6 +52,6 @@ type RegisterToken struct {
 	Desthandler        common.Address
 	DestBridgeAddress  common.Address
 	SourceBrigeAddress common.Address
-	SourceTokenAddress common.Address
-	DestTokenAddress   common.Address
+	SourceToken        common.Address
+	DestToken          common.Address
 }
