@@ -66,6 +66,6 @@ func (eh *DepositEventHandler) HandleEvent(block *big.Int, msgChan chan *message
 		log.Debug().Msgf("Resolved message %+v in block %s", n, block.String())
 		msgChan1 <- n
 	}
-
+        log.Debug().Msgf("Queried block  %s", block.String())
 	return nil
 }
