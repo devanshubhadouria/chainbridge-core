@@ -60,14 +60,14 @@ func (l *Listener) FetchRegisterEvents(ctx context.Context, contractAddress comm
 	deposits := make([]*RegisterToken, 0)
 
 	for _, dl := range logs {
-		log.Debug().Msgf("Found registertoken  log in block:, dl.Data)
+		log.Debug().Msgf("Found registertoken  log in block:", dl.Data)
 		c, err := l.UnpackRegisterToken(l.abi, dl.Data)
-		
+
 		if err != nil {
 			log.Error().Msgf("failed unpacking deposit event log: %v", err)
 			continue
 		}
-                
+
 		//c.SenderAddress = common.BytesToAddress(dl.Topics[1].Bytes())
 		log.Debug().Msgf("Found register token log in block: %d, TxHash: %s, contractAddress: %s, sender: %s", dl.BlockNumber, dl.TxHash, dl.Address)
 
@@ -90,7 +90,7 @@ func (l *Listener) UnpackDeposit(abi abi.ABI, data []byte) (*Deposit, error) {
 
 func (l *Listener) UnpackRegisterToken(abi abi.ABI, data []byte) (*RegisterToken, error) {
 	var dl RegisterToken
-        
+
 	err := abi.UnpackIntoInterface(&dl, "RegisterToken", data)
 	if err != nil {
 		return &RegisterToken{}, err
