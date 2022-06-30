@@ -44,14 +44,14 @@ type RegisterToken struct {
 
 	DestinationDomainId uint8
 
-	DepositNonce uint64
+	DepositNounce uint64
 
 	ResourceId types.ResourceID
 
-	Sourcehandler      common.Address
-	Desthandler        common.Address
-	DestBridgeAddress  common.Address
-	SourceBrigeAddress common.Address
-	SourceToken        common.Address
-	DestToken          common.Address
+	SourceHandler        common.Address
+	DestHandler          common.Address
+	DestBridgeContract   common.Address
+	SourceBridgeContract common.Address
+	SourceToken          common.Address
+	DestToken            common.Address
 }

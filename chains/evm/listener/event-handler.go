@@ -58,7 +58,7 @@ func (eh *DepositEventHandler) HandleEvent(block *big.Int, msgChan chan *message
 	}
 	for _, o := range deposit1 {
 
-		n := message.NewMessage1(o.DomainId, o.DestinationDomainId, o.DepositNonce, o.ResourceId, o.Sourcehandler, o.Desthandler, o.DestBridgeAddress, o.SourceBrigeAddress, o.SourceToken, o.DestToken)
+		n := message.NewMessage1(o.DomainId, o.DestinationDomainId, o.DepositNounce, o.ResourceId, o.SourceHandler, o.DestHandler, o.DestBridgeContract, o.SourceBridgeContract, o.SourceToken, o.DestToken)
 		if err != nil {
 			log.Error().Str("block", block.String()).Uint8("domainID", eh.domainID).Msgf("%v", err)
 			continue
