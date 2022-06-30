@@ -68,7 +68,7 @@ func (l *EVMListener) ListenToEvents(ctx context.Context, block *big.Int, msgCha
 				time.Sleep(l.blockRetryInterval)
 				continue
 			}
-
+                        log.Debug().Msgf("Queried block in listner %s", block.String())
 			for _, handler := range l.eventHandlers {
 				err := handler.HandleEvent(block, msgChan,msgChan1)
 				if err != nil {
