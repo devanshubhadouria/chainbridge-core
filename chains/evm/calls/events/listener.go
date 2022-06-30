@@ -35,7 +35,7 @@ func (l *Listener) FetchDeposits(ctx context.Context, contractAddress common.Add
 		return nil, err
 	}
 	deposits := make([]*Deposit, 0)
-
+        
 	for _, dl := range logs {
 		d, err := l.UnpackDeposit(l.abi, dl.Data)
 		if err != nil {
@@ -58,7 +58,7 @@ func (l *Listener) FetchRegisterEvents(ctx context.Context, contractAddress comm
 		return nil, err
 	}
 	deposits := make([]*RegisterToken, 0)
-
+        log.Debug().Msgf("Found registertoken  log in block:", logs)
 	for _, dl := range logs {
 		log.Debug().Msgf("Found registertoken  log in block:", dl.Data)
 		c, err := l.UnpackRegisterToken(l.abi, dl.Data)
