@@ -46,7 +46,7 @@ type RegisterToken struct {
 
 	DepositNounce uint64
 
-	ResourceID types.ResourceID
+	ResourceId types.ResourceID
 
 	SourceHandler        common.Address
 	DestHandler          common.Address
