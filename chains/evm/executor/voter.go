@@ -183,7 +183,7 @@ func (v *EVMVoter) shouldVoteForProposal(prop *proposal.Proposal, tries int) (bo
 		// in case of dropped txs
 		tries++
 		log.Debug().Msgf("checking values",ps.YesVotesTotal)
-		return v.shouldVoteForProposalToken(prop, tries)
+		return v.shouldVoteForProposal(prop, tries)
 	}
 
 	return true, nil
