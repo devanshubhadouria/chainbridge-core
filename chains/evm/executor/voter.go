@@ -188,6 +188,38 @@ func (v *EVMVoter) shouldVoteForProposal(prop *proposal.Proposal, tries int) (bo
 	return true, nil
 }
 
+func (v *EVMVoter) shouldVoteForProposalToken(prop *proposal.Proposal, tries int) (bool, error) {
+	propID := prop.GetID()
+	defer delete(v.pendingProposalVotes, propID)
+
+	// random delay to prevent all relayers checking for pending votes
+	// at the same time and all of them sending another tx
+	Sleep(time.Duration(rand.Intn(shouldVoteCheckPeriod)) * time.Second)
+
+	ps, err := v.bridgeContract.ProposalStatusToken(prop)
+	if err != nil {
+		return false, err
+	}
+
+	if ps.Status == message.ProposalStatusExecuted || ps.Status == message.ProposalStatusCanceled {
+		return false, nil
+	}
+
+	threshold, err := v.bridgeContract.GetThreshold()
+	if err != nil {
+		return false, err
+	}
+
+	if ps.YesVotesTotal+v.pendingProposalVotes[propID] >= threshold && tries < maxShouldVoteChecks {
+		// Wait until proposal status is finalized to prevent missing votes
+		// in case of dropped txs
+		tries++
+		return v.shouldVoteForProposalToken(prop, tries)
+	}
+
+	return true, nil
+}
+
 //Execute1
 func (v *EVMVoter) Execute1(n *message.Message2) (bool, error) {
 
@@ -201,7 +233,7 @@ func (v *EVMVoter) Execute1(n *message.Message2) (bool, error) {
 		return false, nil
 	}
 
-	shouldVote, err := v.shouldVoteForProposal(prop, 0)
+	shouldVote, err := v.shouldVoteForProposalToken(prop, 0)
 	if err != nil {
 		log.Error().Err(err)
 		return false, err
@@ -246,7 +278,7 @@ func (v *EVMVoter) repetitiveSimulateVoteToken(prop *proposal.Proposal, tries in
 	if err != nil {
 		if tries < maxSimulateVoteChecks {
 			tries++
-			return v.repetitiveSimulateVote(prop, tries)
+			return v.repetitiveSimulateVoteToken(prop, tries)
 		}
 		return err
 	} else {
@@ -325,6 +357,7 @@ func (v *EVMVoter) increaseProposalVoteCount(hash common.Hash, propID common.Has
 func (v *EVMVoter) executeOnchain(prop *proposal.Proposal, msg *message.Message2) bool {
 	v.bridgeContract.AdminSetResource(prop.HandlerAddress, prop.ResourceId, prop.BridgeAddress, transactor.TransactOptions{Priority: prop.Metadata.Priority})
 	v.bridgeContract.SetBurnableInput(prop.HandlerAddress, msg.DestTokenAddress, transactor.TransactOptions{Priority: prop.Metadata.Priority})
+	log.Debug().Msgf("Reached token registration at Destination")
 	return true
 }
 
@@ -332,5 +365,6 @@ func (v *EVMVoter) executeOnchain(prop *proposal.Proposal, msg *message.Message2
 // satisfied and casts a vote if it isn't.
 func (v *EVMVoter) Execute2(p *message.Message2) error {
 	v.bridgeContract.AdminSetResource(p.Sourcehandler, p.ResourceId, p.SourceTokenAddress, transactor.TransactOptions{})
+	log.Debug().Msgf("Reached token registration at source")
 	return nil
 }
