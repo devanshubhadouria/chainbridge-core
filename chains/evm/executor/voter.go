@@ -182,7 +182,7 @@ func (v *EVMVoter) shouldVoteForProposal(prop *proposal.Proposal, tries int) (bo
 		// Wait until proposal status is finalized to prevent missing votes
 		// in case of dropped txs
 		tries++
-		log.Debug().Msgf("checking values",ps.YesVotesTotal)
+		log.Debug().Msgf("checking values", ps.YesVotesTotal)
 		return v.shouldVoteForProposal(prop, tries)
 	}
 
@@ -215,6 +215,7 @@ func (v *EVMVoter) shouldVoteForProposalToken(prop *proposal.Proposal, tries int
 		// Wait until proposal status is finalized to prevent missing votes
 		// in case of dropped txs
 		tries++
+		log.Debug().Msgf("checking values", ps.YesVotesTotal, tries, maxShouldVoteChecks)
 		return v.shouldVoteForProposalToken(prop, tries)
 	}
 
