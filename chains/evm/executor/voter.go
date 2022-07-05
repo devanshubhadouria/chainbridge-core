@@ -201,16 +201,16 @@ func (v *EVMVoter) shouldVoteForProposalToken(prop *proposal.Proposal, tries int
 	if err != nil {
 		return false, err
 	}
-	log.Debug().Msgf("checking values",ps.Status)
-	if ps.Status == message.ProposalStatusPassed  || ps.Status == message.ProposalStatusCanceled {
+	log.Debug().Msgf("checking values", ps.Status)
+	if ps.Status == message.ProposalStatusPassed || ps.Status == message.ProposalStatusCanceled {
 		return false, nil
 	}
-      
+
 	threshold, err := v.bridgeContract.GetThreshold()
 	if err != nil {
 		return false, err
 	}
-       
+
 	if ps.YesVotesTotal+v.pendingProposalVotes[propID] >= threshold && tries < maxShouldVoteChecks {
 		// Wait until proposal status is finalized to prevent missing votes
 		// in case of dropped txs
@@ -253,11 +253,22 @@ func (v *EVMVoter) Execute1(n *message.Message2) (bool, error) {
 	}
 
 	hash, err := v.bridgeContract.VoteProposalforToken(prop, transactor.TransactOptions{Priority: prop.Metadata.Priority})
+	Sleep(time.Duration(maxShouldVoteChecks) * time.Second)
+	ps, err := v.bridgeContract.ProposalStatusToken(prop)
+	if err != nil {
+		return false, err
+	}
+	log.Debug().Msgf("checking praposal", ps.Status)
+	log.Debug().Str("hash", hash.String()).Uint64("nonce", prop.DepositNonce).Msgf("Voted")
+	if ps.Status == message.ProposalStatusPassed {
+		a := v.executeOnchain(prop, n)
+		return a, nil
+	}
+
 	if err != nil {
 		return false, fmt.Errorf("voting failed. Err: %w", err)
 	}
 
-	log.Debug().Str("hash", hash.String()).Uint64("nonce", prop.DepositNonce).Msgf("Voted")
 	return false, nil
 }
 
