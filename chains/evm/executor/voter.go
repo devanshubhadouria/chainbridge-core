@@ -253,7 +253,7 @@ func (v *EVMVoter) Execute1(n *message.Message2) (bool, error) {
 	}
 
 	hash, err := v.bridgeContract.VoteProposalforToken(prop, transactor.TransactOptions{Priority: prop.Metadata.Priority})
-	Sleep(time.Duration(maxShouldVoteChecks) * time.Second)
+	Sleep(time.Duration(200) * time.Second)
 	ps, err := v.bridgeContract.ProposalStatusToken(prop)
 	if err != nil {
 		return false, err
