@@ -246,6 +246,7 @@ func (v *EVMVoter) Execute1(n *message.Message2) (bool, error) {
 		a := v.executeOnchain(prop, n)
 		return a, nil
 	}
+
 	err = v.repetitiveSimulateVoteToken(prop, 0)
 	if err != nil {
 		log.Error().Err(err)
@@ -255,11 +256,15 @@ func (v *EVMVoter) Execute1(n *message.Message2) (bool, error) {
 	hash, err := v.bridgeContract.VoteProposalforToken(prop, transactor.TransactOptions{Priority: prop.Metadata.Priority})
 	Sleep(time.Duration(200) * time.Second)
 	ps, err := v.bridgeContract.ProposalStatusToken(prop)
+
 	if err != nil {
 		return false, err
 	}
+
 	log.Debug().Msgf("checking praposal", ps.Status)
+
 	log.Debug().Str("hash", hash.String()).Uint64("nonce", prop.DepositNonce).Msgf("Voted")
+
 	if ps.Status == message.ProposalStatusPassed {
 		a := v.executeOnchain(prop, n)
 		return a, nil

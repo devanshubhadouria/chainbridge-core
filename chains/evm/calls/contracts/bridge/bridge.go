@@ -349,7 +349,7 @@ func (c *BridgeContract) ProposalStatusToken(p *proposal.Proposal) (message.Prop
 		Str("resourceID", hexutil.Encode(p.ResourceId[:])).
 		Str("handler", p.HandlerAddress.String()).
 		Msg("Getting proposal status")
-	res, err := c.CallContract("getProposalToken", p.Source, p.DepositNonce, p.GetDataHash())
+	res, err := c.CallContract("getProposalToken", p.Source, p.DepositNonce, p.GetDataHash2())
 	if err != nil {
 		return message.ProposalStatus{}, err
 	}
