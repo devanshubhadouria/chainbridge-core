@@ -202,7 +202,7 @@ func (v *EVMVoter) shouldVoteForProposalToken(prop *proposal.Proposal, tries int
 		return false, err
 	}
 
-	if ps.Status == message.ProposalStatusExecuted || ps.Status == message.ProposalStatusCanceled {
+	if ps.Status == message.ProposalStatusPassed  || ps.Status == message.ProposalStatusCanceled {
 		return false, nil
 	}
 
