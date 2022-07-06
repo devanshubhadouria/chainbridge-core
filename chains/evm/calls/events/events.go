@@ -17,7 +17,7 @@ const (
 	ThresholdChangedSig EventSig = "RelayerThresholdChanged(uint256)"
 	ProposalEventSig    EventSig = "ProposalEvent(uint8,uint64,uint8,bytes32)"
 	ProposalVoteSig     EventSig = "ProposalVote(uint8,uint64,uint8,bytes32)"
-	RegisterTokenSig    EventSig = "RegisterToken(uint8,uint8,uint64,bytes32,address,address,address,address,address,address)"
+	RegisterTokenSig    EventSig = "RegisterToken(uint8,uint8,uint64,address,address,address,address,address,address)"
 )
 
 // Deposit struct holds event data with all necessary parameters and a handler response
@@ -45,8 +45,6 @@ type RegisterToken struct {
 	DestinationDomainId uint8
 
 	DepositNounce uint64
-
-	Resource types.ResourceID
 
 	SourceHandler        common.Address
 	DestHandler          common.Address

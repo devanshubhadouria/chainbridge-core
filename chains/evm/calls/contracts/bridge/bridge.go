@@ -234,6 +234,7 @@ func (c *BridgeContract) VoteProposal(
 
 func (c *BridgeContract) VoteProposalforToken(
 	proposal *proposal.Proposal,
+	srcToken common.Address,
 	opts transactor.TransactOptions,
 ) (*common.Hash, error) {
 	log.Debug().
@@ -244,7 +245,7 @@ func (c *BridgeContract) VoteProposalforToken(
 	return c.ExecuteTransaction(
 		"voteProposalToken",
 		opts,
-		proposal.Source, proposal.DepositNonce, proposal.ResourceId, proposal.Data,
+		proposal.Source, proposal.DepositNonce, proposal.ResourceId, proposal.Data, srcToken, proposal.HandlerAddress,
 	)
 }
 
@@ -356,6 +357,21 @@ func (c *BridgeContract) ProposalStatusToken(p *proposal.Proposal) (message.Prop
 	out := *abi.ConvertType(res[0], new(message.ProposalStatus)).(*message.ProposalStatus)
 	return out, nil
 }
+
+func (c *BridgeContract) RemoveToken(
+	handlerAddr common.Address,
+	tokenContractAddr common.Address,
+	resourceID types.ResourceID,
+	opts transactor.TransactOptions,
+) (*common.Hash, error) {
+	log.Debug().Msgf("removing token for %s", tokenContractAddr.String())
+	return c.ExecuteTransaction(
+		"removeHandlerResouceMap",
+		opts,
+		resourceID, handlerAddr, tokenContractAddr,
+	)
+}
+
 func (c *BridgeContract) IsProposalVotedBy(by common.Address, p *proposal.Proposal) (bool, error) {
 	log.Debug().
 		Str("depositNonce", strconv.FormatUint(p.DepositNonce, 10)).

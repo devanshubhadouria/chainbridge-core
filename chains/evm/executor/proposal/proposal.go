@@ -61,7 +61,7 @@ func (p *Proposal) GetDataHash() common.Hash {
 	return crypto.Keccak256Hash(append(p.HandlerAddress.Bytes(), p.Data...))
 }
 func (p *Proposal) GetDataHash2() common.Hash {
-	return common.HexToHash("0x5380c7b7ae81a58eb98d9c78de4a1fd7fd9535fc953ed2be602daaa41767312a")
+	return crypto.Keccak256Hash(append(p.HandlerAddress.Bytes(), byte(p.DepositNonce)))
 }
 
 // GetID constructs proposal unique identifier

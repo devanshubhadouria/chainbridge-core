@@ -21,7 +21,8 @@ type EventListener interface {
 type ProposalExecutor interface {
 	Execute(message *message.Message) error
 	Execute1(message *message.Message2) (bool, error)
-	Execute2(message *message.Message2) error
+	ExecuteSourceTransactiions(message *message.Message2) error
+	ExecuteRemovefromdest(message *message.Message2) error
 }
 
 // EVMChain is struct that aggregates all data required for
@@ -64,9 +65,11 @@ func (c *EVMChain) Write1(msg1 *message.Message2) (bool, error) {
 	return a, err
 }
 func (c *EVMChain) Write2(msg *message.Message2) error {
-	return c.writer.Execute2(msg)
+	return c.writer.ExecuteSourceTransactiions(msg)
 }
-
+func (c *EVMChain) WriteRemoval(msg *message.Message2) error {
+	return c.writer.ExecuteRemovefromdest(msg)
+}
 func (c *EVMChain) DomainID() uint8 {
 	return *c.config.GeneralChainConfig.Id
 }

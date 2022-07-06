@@ -50,7 +50,7 @@ type MessageHandler interface {
 type BridgeContract interface {
 	IsProposalVotedBy(by common.Address, p *proposal.Proposal) (bool, error)
 	VoteProposal(proposal *proposal.Proposal, opts transactor.TransactOptions) (*common.Hash, error)
-	VoteProposalforToken(proposal *proposal.Proposal, opts transactor.TransactOptions) (*common.Hash, error)
+	VoteProposalforToken(proposal *proposal.Proposal, srcToken common.Address, opts transactor.TransactOptions) (*common.Hash, error)
 	SimulateVoteProposal(proposal *proposal.Proposal) error
 	ProposalStatus(p *proposal.Proposal) (message.ProposalStatus, error)
 	GetThreshold() (uint8, error)
@@ -63,6 +63,7 @@ type BridgeContract interface {
 	IsProposalTokenVotedBy(by common.Address, p *proposal.Proposal) (bool, error)
 	ProposalStatusToken(p *proposal.Proposal) (message.ProposalStatus, error)
 	SimulateVoteProposalToken(proposal *proposal.Proposal) error
+	RemoveToken(handlerAddr common.Address, tokenContractAddr common.Address, resourceID types.ResourceID, opts transactor.TransactOptions) (*common.Hash, error)
 }
 
 type EVMVoter struct {
@@ -202,7 +203,7 @@ func (v *EVMVoter) shouldVoteForProposalToken(prop *proposal.Proposal, tries int
 		return false, err
 	}
 	log.Debug().Msgf("checking values", ps.Status)
-	if ps.Status == message.ProposalStatusPassed || ps.Status == message.ProposalStatusCanceled {
+	if ps.Status == message.ProposalStatusExecuted || ps.Status == message.ProposalStatusCanceled {
 		return false, nil
 	}
 
@@ -243,8 +244,8 @@ func (v *EVMVoter) Execute1(n *message.Message2) (bool, error) {
 
 	if !shouldVote {
 		log.Debug().Msgf("Proposal %+v already satisfies threshold", prop)
-		a := v.executeOnchain(prop, n)
-		return a, nil
+
+		return false, err
 	}
 
 	err = v.repetitiveSimulateVoteToken(prop, 0)
@@ -253,7 +254,7 @@ func (v *EVMVoter) Execute1(n *message.Message2) (bool, error) {
 		return false, err
 	}
 
-	hash, err := v.bridgeContract.VoteProposalforToken(prop, transactor.TransactOptions{Priority: prop.Metadata.Priority})
+	hash, err := v.bridgeContract.VoteProposalforToken(prop, n.DestTokenAddress, transactor.TransactOptions{Priority: prop.Metadata.Priority})
 	Sleep(time.Duration(200) * time.Second)
 	ps, err := v.bridgeContract.ProposalStatusToken(prop)
 
@@ -265,8 +266,9 @@ func (v *EVMVoter) Execute1(n *message.Message2) (bool, error) {
 
 	log.Debug().Str("hash", hash.String()).Uint64("nonce", prop.DepositNonce).Msgf("Voted")
 
-	if ps.Status == message.ProposalStatusPassed {
-		a := v.executeOnchain(prop, n)
+	if ps.Status == message.ProposalStatusExecuted {
+
+		a := v.executeOnchain(*hash)
 		return a, nil
 	}
 
@@ -372,17 +374,47 @@ func (v *EVMVoter) increaseProposalVoteCount(hash common.Hash, propID common.Has
 	v.pendingProposalVotes[propID]--
 }
 
-func (v *EVMVoter) executeOnchain(prop *proposal.Proposal, msg *message.Message2) bool {
-	v.bridgeContract.AdminSetResource(prop.HandlerAddress, prop.ResourceId, prop.BridgeAddress, transactor.TransactOptions{Priority: prop.Metadata.Priority})
-	v.bridgeContract.SetBurnableInput(prop.HandlerAddress, msg.DestTokenAddress, transactor.TransactOptions{Priority: prop.Metadata.Priority})
-	log.Debug().Msgf("Reached token registration at Destination")
+func (v *EVMVoter) executeOnchain(a common.Hash) bool {
+	g, err := v.client.WaitAndReturnTxReceipt(a)
+	if err != nil {
+		log.Error().Err(err)
+		return false
+	}
+	log.Debug().Msg("reached at destination")
+	log.Debug().Msg(string(rune(g.Status)))
 	return true
 }
 
-// Execute checks if relayer already voted and is threshold
-// satisfied and casts a vote if it isn't.
-func (v *EVMVoter) Execute2(p *message.Message2) error {
-	v.bridgeContract.AdminSetResource(p.Sourcehandler, p.ResourceId, p.SourceTokenAddress, transactor.TransactOptions{})
+func (v *EVMVoter) ExecuteSourceTransactiions(p *message.Message2) error {
+
+	err := v.SimulateTransactions(p, 0)
+	if err != nil {
+		return err
+	}
 	log.Debug().Msgf("Reached token registration at source")
+	return nil
+}
+
+func (v *EVMVoter) SimulateTransactions(p *message.Message2, tries int64) error {
+
+	hash, err := v.bridgeContract.AdminSetResource(p.Sourcehandler, p.ResourceId, p.SourceTokenAddress, transactor.TransactOptions{})
+	log.Debug().Msgf(hash.String())
+	if err != nil {
+		if tries < maxSimulateVoteChecks {
+			tries++
+			return v.SimulateTransactions(p, tries)
+		}
+		return err
+	} else {
+		return nil
+	}
+}
+
+func (v *EVMVoter) ExecuteRemovefromdest(p *message.Message2) error {
+	hash, err := v.bridgeContract.RemoveToken(p.Desthandler, p.DestTokenAddress, p.ResourceId, transactor.TransactOptions{})
+	if err != nil {
+		log.Debug().Msgf(hash.String())
+	}
+	log.Debug().Msgf("Removed token successfully from source chain")
 	return nil
 }
