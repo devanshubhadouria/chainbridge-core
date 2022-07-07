@@ -393,7 +393,7 @@ func (c *BridgeContract) IsProposalTokenVotedBy(by common.Address, p *proposal.P
 		Str("resourceID", hexutil.Encode(p.ResourceId[:])).
 		Str("handler", p.HandlerAddress.String()).
 		Msgf("Getting is proposal voted by %s", by.String())
-	res, err := c.CallContract("_hasVotedOnProposalToken", idAndNonce(p.Source, p.DepositNonce), p.GetDataHash(), by)
+	res, err := c.CallContract("_hasVotedOnProposalToken", idAndNonce(p.Source, p.DepositNonce), p.GetDataHash2(), by)
 	if err != nil {
 		return false, err
 	}
