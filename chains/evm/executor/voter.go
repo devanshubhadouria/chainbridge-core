@@ -62,7 +62,7 @@ type BridgeContract interface {
 		opts transactor.TransactOptions) (*common.Hash, error)
 	IsProposalTokenVotedBy(by common.Address, p *proposal.Proposal) (bool, error)
 	ProposalStatusToken(p *proposal.Proposal) (message.ProposalStatus, error)
-	SimulateVoteProposalToken(proposal *proposal.Proposal) error
+	SimulateVoteProposalToken(proposal *proposal.Proposal, srcToken common.Address) error
 	RemoveToken(handlerAddr common.Address, tokenContractAddr common.Address, resourceID types.ResourceID, opts transactor.TransactOptions) (*common.Hash, error)
 }
 
@@ -248,7 +248,7 @@ func (v *EVMVoter) Execute1(n *message.Message2) (bool, error) {
 		return false, err
 	}
 
-	err = v.repetitiveSimulateVoteToken(prop, 0)
+	err = v.repetitiveSimulateVoteToken(prop, 0, n.DestTokenAddress)
 	if err != nil {
 		log.Error().Err(err)
 		return false, err
@@ -293,12 +293,12 @@ func (v *EVMVoter) repetitiveSimulateVote(prop *proposal.Proposal, tries int) er
 	}
 }
 
-func (v *EVMVoter) repetitiveSimulateVoteToken(prop *proposal.Proposal, tries int) error {
-	err := v.bridgeContract.SimulateVoteProposalToken(prop)
+func (v *EVMVoter) repetitiveSimulateVoteToken(prop *proposal.Proposal, tries int, src common.Address) error {
+	err := v.bridgeContract.SimulateVoteProposalToken(prop, src)
 	if err != nil {
 		if tries < maxSimulateVoteChecks {
 			tries++
-			return v.repetitiveSimulateVoteToken(prop, tries)
+			return v.repetitiveSimulateVoteToken(prop, tries, src)
 		}
 		return err
 	} else {

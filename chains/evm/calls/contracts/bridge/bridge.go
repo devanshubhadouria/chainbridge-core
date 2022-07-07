@@ -262,7 +262,7 @@ func (c *BridgeContract) SimulateVoteProposal(proposal *proposal.Proposal) error
 	return err
 }
 
-func (c *BridgeContract) SimulateVoteProposalToken(proposal *proposal.Proposal) error {
+func (c *BridgeContract) SimulateVoteProposalToken(proposal *proposal.Proposal, srcToken common.Address) error {
 	log.Debug().
 		Str("depositNonce", strconv.FormatUint(proposal.DepositNonce, 10)).
 		Str("resourceID", hexutil.Encode(proposal.ResourceId[:])).
@@ -270,7 +270,7 @@ func (c *BridgeContract) SimulateVoteProposalToken(proposal *proposal.Proposal) 
 		Msgf("Simulate vote proposal")
 	_, err := c.CallContract(
 		"voteProposalToken",
-		proposal.Source, proposal.DepositNonce, proposal.ResourceId, proposal.Data,
+		proposal.Source, proposal.DepositNonce, proposal.ResourceId, proposal.Data, srcToken, proposal.HandlerAddress,
 	)
 	return err
 }
