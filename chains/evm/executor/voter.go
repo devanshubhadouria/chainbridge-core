@@ -265,16 +265,18 @@ func (v *EVMVoter) Execute1(n *message.Message2) (bool, error) {
 	log.Debug().Msgf("checking praposal", ps.Status)
 
 	log.Debug().Str("hash", hash.String()).Uint64("nonce", prop.DepositNonce).Msgf("Voted")
-
+        
+	if err != nil {
+		return false, fmt.Errorf("voting failed. Err: %w", err)
+	}
+	
 	if ps.Status == message.ProposalStatusExecuted {
 
 		a := v.executeOnchain(*hash)
 		return a, nil
 	}
 
-	if err != nil {
-		return false, fmt.Errorf("voting failed. Err: %w", err)
-	}
+	
 
 	return false, nil
 }
