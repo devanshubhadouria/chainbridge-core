@@ -20,6 +20,7 @@ type RelayedChain interface {
 	Write(message *message.Message) error
 	Write1(message *message.Message2) (bool, error)
 	Write2(message *message.Message2) error
+	WriteRemoval(message *message.Message2) error
 	DomainID() uint8
 }
 
@@ -106,7 +107,11 @@ func (r *Relayer) route1(n *message.Message2) {
 		return
 	}
 	if a {
-		sorcChain.Write2(n)
+		err:=sorcChain.Write2(n)
+		if err !=nil{
+			sorcChain.WriteRemoval(n)
+		}
+		
 	}
 }
 
