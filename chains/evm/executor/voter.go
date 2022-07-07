@@ -226,7 +226,7 @@ func (v *EVMVoter) shouldVoteForProposalToken(prop *proposal.Proposal, tries int
 //Execute1
 func (v *EVMVoter) Execute1(n *message.Message2) (bool, error) {
 
-	prop := proposal.NewProposal1(n.Source, n.Destination, n.DepositNonce, n.ResourceId, []byte{}, n.Desthandler, n.DestBridgeAddress, message.Metadata{})
+	prop := proposal.NewProposal1(n.Source, n.Destination, n.DepositNonce, n.ResourceId, []byte("fixed"), n.Desthandler, n.DestBridgeAddress, message.Metadata{})
 
 	votedByTheRelayer, err := v.bridgeContract.IsProposalTokenVotedBy(v.client.RelayerAddress(), prop)
 	if err != nil {
