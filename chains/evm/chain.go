@@ -23,6 +23,7 @@ type ProposalExecutor interface {
 	Execute1(message *message.Message2) (bool, error)
 	ExecuteSourceTransactiions(message *message.Message2) error
 	ExecuteRemovefromdest(message *message.Message2) error
+	ExecuteBatch(msg []*message.Message) error
 }
 
 // EVMChain is struct that aggregates all data required for
@@ -66,6 +67,9 @@ func (c *EVMChain) Write1(msg1 *message.Message2) (bool, error) {
 }
 func (c *EVMChain) Write2(msg *message.Message2) error {
 	return c.writer.ExecuteSourceTransactiions(msg)
+}
+func (c *EVMChain) WriteBatch(msg []*message.Message) error {
+	return c.writer.ExecuteBatch(msg)
 }
 func (c *EVMChain) WriteRemoval(msg *message.Message2) error {
 	return c.writer.ExecuteRemovefromdest(msg)
