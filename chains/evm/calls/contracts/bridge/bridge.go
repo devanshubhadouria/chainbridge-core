@@ -419,3 +419,27 @@ func idAndNonce(srcId uint8, nonce uint64) *big.Int {
 	data = append(data, uint8(srcId))
 	return big.NewInt(0).SetBytes(data)
 }
+
+func (c *BridgeContract) IsFeeClaimThresholdReached() (bool, error) {
+	log.Debug().Msgf("Getting fee claim bool  a relayer")
+	res, err := c.CallContract("relayerVoteCount")
+	if err != nil {
+		return false, err
+	}
+	out := abi.ConvertType(res[0], new(bool)).(*bool)
+	return *out, nil
+}
+
+func (c *BridgeContract) RelayerClaimFees(
+	destDomainID uint8,
+	opts transactor.TransactOptions,
+) (*common.Hash, error) {
+	log.Debug().
+		Str("destDomainID", strconv.FormatUint(uint64(destDomainID), 10)).
+		Msgf("relayerClaimfees")
+	return c.ExecuteTransaction(
+		"relayerClaimfees",
+		opts,
+		destDomainID,
+	)
+}

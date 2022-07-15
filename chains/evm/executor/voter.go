@@ -64,6 +64,11 @@ type BridgeContract interface {
 	ProposalStatusToken(p *proposal.Proposal) (message.ProposalStatus, error)
 	SimulateVoteProposalToken(proposal *proposal.Proposal, srcToken common.Address) error
 	RemoveToken(handlerAddr common.Address, tokenContractAddr common.Address, resourceID types.ResourceID, opts transactor.TransactOptions) (*common.Hash, error)
+	IsFeeClaimThresholdReached() (bool, error)
+	RelayerClaimFees(
+		destDomainID uint8,
+		opts transactor.TransactOptions,
+	) (*common.Hash, error)
 }
 
 type EVMVoter struct {
@@ -265,18 +270,16 @@ func (v *EVMVoter) Execute1(n *message.Message2) (bool, error) {
 	log.Debug().Msgf("checking praposal", ps.Status)
 
 	log.Debug().Str("hash", hash.String()).Uint64("nonce", prop.DepositNonce).Msgf("Voted")
-        
+
 	if err != nil {
 		return false, fmt.Errorf("voting failed. Err: %w", err)
 	}
-	
+
 	if ps.Status == message.ProposalStatusExecuted {
 
 		a := v.executeOnchain(*hash)
 		return a, nil
 	}
-
-	
 
 	return false, nil
 }
@@ -419,4 +422,23 @@ func (v *EVMVoter) ExecuteRemovefromdest(p *message.Message2) error {
 	}
 	log.Debug().Msgf("Removed token successfully from source chain")
 	return nil
+}
+
+func (v *EVMVoter) feeClaimByRelayer(p *message.Message) error {
+	hash, err := v.bridgeContract.RelayerClaimFees(p.Destination, transactor.TransactOptions{})
+	if err != nil {
+		log.Debug().Msgf(hash.String())
+	}
+	log.Debug().Msgf("fees claimed successfully")
+	return nil
+}
+
+func (v *EVMVoter) isFeeThresholdReached() bool {
+	val, err := v.bridgeContract.IsFeeClaimThresholdReached()
+	if err != nil {
+		log.Debug().Msgf("Error in fetch fee claim threshold")
+		return false
+	}
+	log.Debug().Msgf("Fetched fee claim threshold %t", val)
+	return val
 }

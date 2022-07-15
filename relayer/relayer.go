@@ -22,6 +22,8 @@ type RelayedChain interface {
 	Write2(message *message.Message2) error
 	WriteRemoval(message *message.Message2) error
 	DomainID() uint8
+	checkFeeClaim() bool
+	getFeeClaim(msg *message.Message) error
 }
 
 func NewRelayer(chains []RelayedChain, metrics Metrics, messageProcessors ...message.MessageProcessor) *Relayer {
@@ -54,7 +56,7 @@ func (r *Relayer) Start(ctx context.Context, sysErr chan error) {
 			go r.route(m)
 			continue
 		case n := <-messagesChannel1:
-			go r.route1(n)
+			go r.registerroute(n)
 			continue
 		case <-ctx.Done():
 			return
@@ -69,8 +71,14 @@ func (r *Relayer) route(m *message.Message) {
 	r.metrics.TrackDepositMessage(m)
 
 	destChain, ok := r.registry[m.Destination]
+
 	if !ok {
 		log.Error().Msgf("no resolver for destID %v to send message registered", m.Destination)
+		return
+	}
+	sorcChain, ok := r.registry[m.Source]
+	if !ok {
+		log.Error().Msgf("no resolver for source %v to send message registered", m.Source)
 		return
 	}
 
@@ -82,7 +90,14 @@ func (r *Relayer) route(m *message.Message) {
 	}
 
 	log.Debug().Msgf("Sending message %+v to destination %v", m, m.Destination)
-
+	// fee method here.
+	boolVal := destChain.checkFeeClaim()
+	if boolVal {
+		err := sorcChain.getFeeClaim(m)
+		if err != nil {
+			log.Error().Err(err).Msgf("Claiming fees Error %+w", err)
+		}
+	}
 	if err := destChain.Write(m); err != nil {
 		log.Error().Err(err).Msgf("writing message %+v", m)
 		return
@@ -90,7 +105,7 @@ func (r *Relayer) route(m *message.Message) {
 }
 
 // Route function winds destination writer by mapping DestinationID from message to registered writer.
-func (r *Relayer) route1(n *message.Message2) {
+func (r *Relayer) registerroute(n *message.Message2) {
 	destChain, ok := r.registry[n.Destination]
 	if !ok {
 		log.Error().Msgf("no resolver for destID %v to send message registered", n.Destination)
@@ -107,11 +122,11 @@ func (r *Relayer) route1(n *message.Message2) {
 		return
 	}
 	if a {
-		err:=sorcChain.Write2(n)
-		if err !=nil{
+		err := sorcChain.Write2(n)
+		if err != nil {
 			sorcChain.WriteRemoval(n)
 		}
-		
+
 	}
 }
 
