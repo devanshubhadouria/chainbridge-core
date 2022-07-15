@@ -232,6 +232,7 @@ func (c *BridgeContract) VoteProposal(
 	)
 }
 func (c *BridgeContract) VoteProposalBatch(
+	proposal []*proposal.Proposal,
 	sources []uint8,
 	DepositNounces []uint64,
 	ResourceID []types.ResourceID,
