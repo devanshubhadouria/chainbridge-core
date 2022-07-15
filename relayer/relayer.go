@@ -20,7 +20,6 @@ type RelayedChain interface {
 	Write(message *message.Message) error
 	Write1(message *message.Message2) (bool, error)
 	Write2(message *message.Message2) error
-	WriteBatch(message []*message.Message) error
 	WriteRemoval(message *message.Message2) error
 	DomainID() uint8
 }
@@ -40,8 +39,7 @@ type Relayer struct {
 // and passing them with a channel that accepts unified cross chain message format
 func (r *Relayer) Start(ctx context.Context, sysErr chan error) {
 	log.Debug().Msgf("Starting relayer")
-	massagebatch := make(map[uint8][]*message.Message)
-	chainbatchcount := make(map[uint8]uint8)
+
 	messagesChannel := make(chan *message.Message)
 	messagesChannel1 := make(chan *message.Message2)
 	for _, c := range r.relayedChains {
@@ -53,13 +51,7 @@ func (r *Relayer) Start(ctx context.Context, sysErr chan error) {
 	for {
 		select {
 		case m := <-messagesChannel:
-			massagebatch[m.Destination][chainbatchcount[m.Destination]] = m
-			chainbatchcount[m.Destination]++
-			if len(massagebatch[m.Destination]) == 2 {
-				chainbatchcount[m.Destination] = 0
-				go r.routebatch(massagebatch[m.Destination])
-			}
-
+			go r.route(m)
 			continue
 		case n := <-messagesChannel1:
 			go r.route1(n)
@@ -88,37 +80,12 @@ func (r *Relayer) route(m *message.Message) {
 			return
 		}
 	}
+
 	log.Debug().Msgf("Sending message %+v to destination %v", m, m.Destination)
+
 	if err := destChain.Write(m); err != nil {
 		log.Error().Err(err).Msgf("writing message %+v", m)
 		return
-	}
-}
-
-func (r *Relayer) routebatch(m []*message.Message) {
-	for i := 0; i < len(m); i++ {
-		r.metrics.TrackDepositMessage(m[i])
-
-		destChain, ok := r.registry[m[i].Destination]
-		if !ok {
-			log.Error().Msgf("no resolver for destID %v to send message registered", m[i].Destination)
-			return
-		}
-
-		for _, mp := range r.messageProcessors {
-			if err := mp(m[i]); err != nil {
-				log.Error().Err(fmt.Errorf("error %w processing mesage %v", err, m[i]))
-				return
-			}
-		}
-
-		log.Debug().Msgf("Sending message %+v to destination %v", m[i], m[i].Destination)
-		if i == len(m)-1 {
-			if err := destChain.WriteBatch(m); err != nil {
-				log.Error().Err(err).Msgf("writing message %+v", m)
-				return
-			}
-		}
 	}
 }
 
@@ -140,11 +107,11 @@ func (r *Relayer) route1(n *message.Message2) {
 		return
 	}
 	if a {
-		err := sorcChain.Write2(n)
-		if err != nil {
+		err:=sorcChain.Write2(n)
+		if err !=nil{
 			sorcChain.WriteRemoval(n)
 		}
-
+		
 	}
 }
 

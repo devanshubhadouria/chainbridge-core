@@ -64,13 +64,6 @@ type BridgeContract interface {
 	ProposalStatusToken(p *proposal.Proposal) (message.ProposalStatus, error)
 	SimulateVoteProposalToken(proposal *proposal.Proposal, srcToken common.Address) error
 	RemoveToken(handlerAddr common.Address, tokenContractAddr common.Address, resourceID types.ResourceID, opts transactor.TransactOptions) (*common.Hash, error)
-	VoteProposalBatch(
-		sources []uint8,
-		DepositNounces []uint64,
-		ResourceID []types.ResourceID,
-		dataArray [][]byte,
-		opts transactor.TransactOptions,
-	) (*common.Hash, error)
 }
 
 type EVMVoter struct {
@@ -272,16 +265,18 @@ func (v *EVMVoter) Execute1(n *message.Message2) (bool, error) {
 	log.Debug().Msgf("checking praposal", ps.Status)
 
 	log.Debug().Str("hash", hash.String()).Uint64("nonce", prop.DepositNonce).Msgf("Voted")
-
+        
 	if err != nil {
 		return false, fmt.Errorf("voting failed. Err: %w", err)
 	}
-
+	
 	if ps.Status == message.ProposalStatusExecuted {
 
 		a := v.executeOnchain(*hash)
 		return a, nil
 	}
+
+	
 
 	return false, nil
 }
@@ -423,52 +418,5 @@ func (v *EVMVoter) ExecuteRemovefromdest(p *message.Message2) error {
 		log.Debug().Msgf(hash.String())
 	}
 	log.Debug().Msgf("Removed token successfully from source chain")
-	return nil
-}
-
-func (v *EVMVoter) ExecuteBatch(n []*message.Message) error {
-	var sources []uint8
-	var depositNounces []uint64
-	var datas [][]byte
-	var resourceids []types.ResourceID
-
-	for i := 0; i < len(n); i++ {
-		prop, err := v.mh.HandleMessage(n[i])
-		if err != nil {
-			return err
-		}
-		sources[i] = prop.Source
-		depositNounces[i] = prop.DepositNonce
-		datas[i] = prop.Data
-		resourceids[i] = prop.ResourceId
-		votedByTheRelayer, err := v.bridgeContract.IsProposalVotedBy(v.client.RelayerAddress(), prop)
-		if err != nil {
-			return err
-		}
-		if votedByTheRelayer {
-			return nil
-		}
-		shouldVote, err := v.shouldVoteForProposal(prop, 0)
-		if err != nil {
-			log.Error().Err(err)
-			return err
-		}
-		if !shouldVote {
-			log.Debug().Msgf("Proposal %+v already satisfies threshold", prop)
-
-			return err
-
-		}
-		err = v.repetitiveSimulateVote(prop, 0)
-		if err != nil {
-			log.Error().Err(err)
-			return err
-		}
-	}
-	hash, err := v.bridgeContract.VoteProposalBatch(sources, depositNounces, resourceids, datas, transactor.TransactOptions{})
-	if err != nil {
-		return fmt.Errorf("voting failed. Err: %w", err)
-	}
-	log.Debug().Str("hash", hash.String()).Msgf("Voted")
 	return nil
 }

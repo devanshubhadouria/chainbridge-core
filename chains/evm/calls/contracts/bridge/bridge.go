@@ -231,22 +231,6 @@ func (c *BridgeContract) VoteProposal(
 		proposal.Source, proposal.DepositNonce, proposal.ResourceId, proposal.Data,
 	)
 }
-func (c *BridgeContract) VoteProposalBatch(
-	proposal []*proposal.Proposal,
-	sources []uint8,
-	DepositNounces []uint64,
-	ResourceID []types.ResourceID,
-	dataArray [][]byte,
-	opts transactor.TransactOptions,
-) (*common.Hash, error) {
-	log.Debug().
-		Msgf("Vote proposal batch")
-	return c.ExecuteTransaction(
-		"voteProposalBatch",
-		opts,
-		sources, DepositNounces, ResourceID, dataArray,
-	)
-}
 
 func (c *BridgeContract) VoteProposalforToken(
 	proposal *proposal.Proposal,
