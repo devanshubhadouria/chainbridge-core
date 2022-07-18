@@ -232,23 +232,6 @@ func (c *BridgeContract) VoteProposal(
 	)
 }
 
-func (c *BridgeContract) VoteProposalforToken(
-	proposal *proposal.Proposal,
-	srcToken common.Address,
-	opts transactor.TransactOptions,
-) (*common.Hash, error) {
-	log.Debug().
-		Str("depositNonce", strconv.FormatUint(proposal.DepositNonce, 10)).
-		Str("resourceID", hexutil.Encode(proposal.ResourceId[:])).
-		Str("handler", proposal.HandlerAddress.String()).
-		Msgf("Vote proposal")
-	return c.ExecuteTransaction(
-		"voteProposalToken",
-		opts,
-		proposal.Source, proposal.DepositNonce, proposal.ResourceId, proposal.Data, srcToken, proposal.HandlerAddress,
-	)
-}
-
 func (c *BridgeContract) SimulateVoteProposal(proposal *proposal.Proposal) error {
 	log.Debug().
 		Str("depositNonce", strconv.FormatUint(proposal.DepositNonce, 10)).
@@ -258,19 +241,6 @@ func (c *BridgeContract) SimulateVoteProposal(proposal *proposal.Proposal) error
 	_, err := c.CallContract(
 		"voteProposal",
 		proposal.Source, proposal.DepositNonce, proposal.ResourceId, proposal.Data,
-	)
-	return err
-}
-
-func (c *BridgeContract) SimulateVoteProposalToken(proposal *proposal.Proposal, srcToken common.Address) error {
-	log.Debug().
-		Str("depositNonce", strconv.FormatUint(proposal.DepositNonce, 10)).
-		Str("resourceID", hexutil.Encode(proposal.ResourceId[:])).
-		Str("handler", proposal.HandlerAddress.String()).
-		Msgf("Simulate vote proposal")
-	_, err := c.CallContract(
-		"voteProposalToken",
-		proposal.Source, proposal.DepositNonce, proposal.ResourceId, proposal.Data, srcToken, proposal.HandlerAddress,
 	)
 	return err
 }
@@ -344,35 +314,6 @@ func (c *BridgeContract) ProposalStatus(p *proposal.Proposal) (message.ProposalS
 	return out, nil
 }
 
-func (c *BridgeContract) ProposalStatusToken(p *proposal.Proposal) (message.ProposalStatus, error) {
-	log.Debug().
-		Str("depositNonce", strconv.FormatUint(p.DepositNonce, 10)).
-		Str("resourceID", hexutil.Encode(p.ResourceId[:])).
-		Str("handler", p.HandlerAddress.String()).
-		Str("datahash", p.GetDataHash2().String()).
-		Msg("Getting proposal status")
-	res, err := c.CallContract("getProposalToken", p.Source, p.DepositNonce, p.GetDataHash2())
-	if err != nil {
-		return message.ProposalStatus{}, err
-	}
-	out := *abi.ConvertType(res[0], new(message.ProposalStatus)).(*message.ProposalStatus)
-	return out, nil
-}
-
-func (c *BridgeContract) RemoveToken(
-	handlerAddr common.Address,
-	tokenContractAddr common.Address,
-	resourceID types.ResourceID,
-	opts transactor.TransactOptions,
-) (*common.Hash, error) {
-	log.Debug().Msgf("removing token for %s", tokenContractAddr.String())
-	return c.ExecuteTransaction(
-		"removeHandlerResouceMap",
-		opts,
-		resourceID, handlerAddr, tokenContractAddr,
-	)
-}
-
 func (c *BridgeContract) IsProposalVotedBy(by common.Address, p *proposal.Proposal) (bool, error) {
 	log.Debug().
 		Str("depositNonce", strconv.FormatUint(p.DepositNonce, 10)).
@@ -380,20 +321,6 @@ func (c *BridgeContract) IsProposalVotedBy(by common.Address, p *proposal.Propos
 		Str("handler", p.HandlerAddress.String()).
 		Msgf("Getting is proposal voted by %s", by.String())
 	res, err := c.CallContract("_hasVotedOnProposal", idAndNonce(p.Source, p.DepositNonce), p.GetDataHash(), by)
-	if err != nil {
-		return false, err
-	}
-	out := *abi.ConvertType(res[0], new(bool)).(*bool)
-	return out, nil
-}
-
-func (c *BridgeContract) IsProposalTokenVotedBy(by common.Address, p *proposal.Proposal) (bool, error) {
-	log.Debug().
-		Str("depositNonce", strconv.FormatUint(p.DepositNonce, 10)).
-		Str("resourceID", hexutil.Encode(p.ResourceId[:])).
-		Str("handler", p.HandlerAddress.String()).
-		Msgf("Getting is proposal voted by %s", by.String())
-	res, err := c.CallContract("_hasVotedOnProposalToken", idAndNonce(p.Source, p.DepositNonce), p.GetDataHash2(), by)
 	if err != nil {
 		return false, err
 	}

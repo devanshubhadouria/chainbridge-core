@@ -15,14 +15,11 @@ import (
 )
 
 type EventListener interface {
-	ListenToEvents(ctx context.Context, startBlock *big.Int, msgChan chan *message.Message, msgChan1 chan *message.Message2, errChan chan<- error)
+	ListenToEvents(ctx context.Context, startBlock *big.Int, msgChan chan *message.Message, errChan chan<- error)
 }
 
 type ProposalExecutor interface {
 	Execute(message *message.Message) error
-	Execute1(message *message.Message2) (bool, error)
-	ExecuteSourceTransactiions(message *message.Message2) error
-	ExecuteRemovefromdest(message *message.Message2) error
 	FeeClaimByRelayer(p *message.Message) error
 	IsFeeThresholdReached() bool
 }
@@ -41,7 +38,7 @@ func NewEVMChain(listener EventListener, writer ProposalExecutor, blockstore *st
 
 // PollEvents is the goroutine that polls blocks and searches Deposit events in them.
 // Events are then sent to eventsChan.
-func (c *EVMChain) PollEvents(ctx context.Context, sysErr chan<- error, msgChan chan *message.Message, msgChan1 chan *message.Message2) {
+func (c *EVMChain) PollEvents(ctx context.Context, sysErr chan<- error, msgChan chan *message.Message) {
 	log.Info().Msg("Polling Blocks...")
 
 	startBlock, err := c.blockstore.GetStartBlock(
@@ -55,23 +52,13 @@ func (c *EVMChain) PollEvents(ctx context.Context, sysErr chan<- error, msgChan 
 		return
 	}
 
-	go c.listener.ListenToEvents(ctx, startBlock, msgChan, msgChan1, sysErr)
+	go c.listener.ListenToEvents(ctx, startBlock, msgChan, sysErr)
 }
 
 func (c *EVMChain) Write(msg *message.Message) error {
 	return c.writer.Execute(msg)
 }
 
-func (c *EVMChain) Write1(msg1 *message.Message2) (bool, error) {
-	a, err := c.writer.Execute1(msg1)
-	return a, err
-}
-func (c *EVMChain) Write2(msg *message.Message2) error {
-	return c.writer.ExecuteSourceTransactiions(msg)
-}
-func (c *EVMChain) WriteRemoval(msg *message.Message2) error {
-	return c.writer.ExecuteRemovefromdest(msg)
-}
 func (c *EVMChain) DomainID() uint8 {
 	return *c.config.GeneralChainConfig.Id
 }

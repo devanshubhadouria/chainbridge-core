@@ -16,11 +16,8 @@ type Metrics interface {
 }
 
 type RelayedChain interface {
-	PollEvents(ctx context.Context, sysErr chan<- error, msgChan chan *message.Message, msgChan1 chan *message.Message2)
+	PollEvents(ctx context.Context, sysErr chan<- error, msgChan chan *message.Message)
 	Write(message *message.Message) error
-	Write1(message *message.Message2) (bool, error)
-	Write2(message *message.Message2) error
-	WriteRemoval(message *message.Message2) error
 	DomainID() uint8
 	CheckFeeClaim() bool
 	GetFeeClaim(msg *message.Message) error
@@ -43,11 +40,10 @@ func (r *Relayer) Start(ctx context.Context, sysErr chan error) {
 	log.Debug().Msgf("Starting relayer")
 
 	messagesChannel := make(chan *message.Message)
-	messagesChannel1 := make(chan *message.Message2)
 	for _, c := range r.relayedChains {
 		log.Debug().Msgf("Starting chain %v", c.DomainID())
 		r.addRelayedChain(c)
-		go c.PollEvents(ctx, sysErr, messagesChannel, messagesChannel1)
+		go c.PollEvents(ctx, sysErr, messagesChannel)
 	}
 
 	for {
@@ -55,9 +51,7 @@ func (r *Relayer) Start(ctx context.Context, sysErr chan error) {
 		case m := <-messagesChannel:
 			go r.route(m)
 			continue
-		case n := <-messagesChannel1:
-			go r.registerroute(n)
-			continue
+
 		case <-ctx.Done():
 			return
 
@@ -101,32 +95,6 @@ func (r *Relayer) route(m *message.Message) {
 	if err := destChain.Write(m); err != nil {
 		log.Error().Err(err).Msgf("writing message %+v", m)
 		return
-	}
-}
-
-// Route function winds destination writer by mapping DestinationID from message to registered writer.
-func (r *Relayer) registerroute(n *message.Message2) {
-	destChain, ok := r.registry[n.Destination]
-	if !ok {
-		log.Error().Msgf("no resolver for destID %v to send message registered", n.Destination)
-		return
-	}
-	sorcChain, ok := r.registry[n.Source]
-	if !ok {
-		log.Error().Msgf("no resolver for destID %v to send message registered", n.Source)
-		return
-	}
-	a, err := destChain.Write1(n)
-	if err != nil {
-		log.Error().Err(err).Msgf("writing message %+v", n)
-		return
-	}
-	if a {
-		err := sorcChain.Write2(n)
-		if err != nil {
-			sorcChain.WriteRemoval(n)
-		}
-
 	}
 }
 

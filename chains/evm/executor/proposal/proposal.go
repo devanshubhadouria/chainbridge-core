@@ -32,35 +32,8 @@ type Proposal struct {
 	BridgeAddress  common.Address
 }
 
-func NewProposal1(source, destination uint8, depositNonce uint64, resourceId types.ResourceID, data []byte, handlerAddress, bridgeAddress common.Address, metadata message.Metadata) *Proposal {
-
-	return &Proposal{
-		Source:         source,
-		Destination:    destination,
-		DepositNonce:   depositNonce,
-		ResourceId:     resourceId,
-		Data:           data,
-		HandlerAddress: handlerAddress,
-		BridgeAddress:  bridgeAddress,
-		Metadata:       metadata,
-	}
-}
-
-type Proposal1 struct {
-	Source         uint8  // Source domainID where message was initiated
-	Destination    uint8  // Destination domainID where message is to be sent
-	DepositNonce   uint64 // Nonce for the deposit
-	ResourceId     types.ResourceID
-	Data           []byte
-	HandlerAddress common.Address
-	BridgeAddress  common.Address
-}
-
 // GetDataHash constructs and returns proposal data hash
 func (p *Proposal) GetDataHash() common.Hash {
-	return crypto.Keccak256Hash(append(p.HandlerAddress.Bytes(), p.Data...))
-}
-func (p *Proposal) GetDataHash2() common.Hash {
 	return crypto.Keccak256Hash(append(p.HandlerAddress.Bytes(), p.Data...))
 }
 
