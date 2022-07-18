@@ -22,8 +22,8 @@ type RelayedChain interface {
 	Write2(message *message.Message2) error
 	WriteRemoval(message *message.Message2) error
 	DomainID() uint8
-	checkFeeClaim() bool
-	getFeeClaim(msg *message.Message) error
+	CheckFeeClaim() bool
+	GetFeeClaim(msg *message.Message) error
 }
 
 func NewRelayer(chains []RelayedChain, metrics Metrics, messageProcessors ...message.MessageProcessor) *Relayer {
@@ -91,9 +91,9 @@ func (r *Relayer) route(m *message.Message) {
 
 	log.Debug().Msgf("Sending message %+v to destination %v", m, m.Destination)
 	// fee method here.
-	boolVal := destChain.checkFeeClaim()
+	boolVal := destChain.CheckFeeClaim()
 	if boolVal {
-		err := sorcChain.getFeeClaim(m)
+		err := sorcChain.GetFeeClaim(m)
 		if err != nil {
 			log.Error().Err(err).Msgf("Claiming fees Error %+w", err)
 		}

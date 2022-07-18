@@ -424,7 +424,7 @@ func (v *EVMVoter) ExecuteRemovefromdest(p *message.Message2) error {
 	return nil
 }
 
-func (v *EVMVoter) feeClaimByRelayer(p *message.Message) error {
+func (v *EVMVoter) FeeClaimByRelayer(p *message.Message) error {
 	hash, err := v.bridgeContract.RelayerClaimFees(p.Destination, transactor.TransactOptions{})
 	if err != nil {
 		log.Debug().Msgf(hash.String())
@@ -433,7 +433,7 @@ func (v *EVMVoter) feeClaimByRelayer(p *message.Message) error {
 	return nil
 }
 
-func (v *EVMVoter) isFeeThresholdReached() bool {
+func (v *EVMVoter) IsFeeThresholdReached() bool {
 	val, err := v.bridgeContract.IsFeeClaimThresholdReached()
 	if err != nil {
 		log.Debug().Msgf("Error in fetch fee claim threshold")

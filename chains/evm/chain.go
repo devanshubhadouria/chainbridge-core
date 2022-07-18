@@ -23,8 +23,8 @@ type ProposalExecutor interface {
 	Execute1(message *message.Message2) (bool, error)
 	ExecuteSourceTransactiions(message *message.Message2) error
 	ExecuteRemovefromdest(message *message.Message2) error
-	feeClaimByRelayer(p *message.Message) error
-	isFeeThresholdReached() bool
+	FeeClaimByRelayer(p *message.Message) error
+	IsFeeThresholdReached() bool
 }
 
 // EVMChain is struct that aggregates all data required for
@@ -75,9 +75,9 @@ func (c *EVMChain) WriteRemoval(msg *message.Message2) error {
 func (c *EVMChain) DomainID() uint8 {
 	return *c.config.GeneralChainConfig.Id
 }
-func (c *EVMChain) checkFeeClaim() bool {
-	return c.writer.isFeeThresholdReached()
+func (c *EVMChain) CheckFeeClaim() bool {
+	return c.writer.IsFeeThresholdReached()
 }
-func (c *EVMChain) getFeeClaim(msg *message.Message) error {
-	return c.writer.feeClaimByRelayer(msg)
+func (c *EVMChain) GetFeeClaim(msg *message.Message) error {
+	return c.writer.FeeClaimByRelayer(msg)
 }
